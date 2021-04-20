@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Funky Shape Generator V1</title>
+	<style>
+		body {
+			padding: 0;
+			margin: 0;
+		}
+	</style>
+	<script src="p5.js"></script>
+	<script>
+		// Defining global slider variables
+		let vSizeSlider
+		let xRotationSlider
+		let sCountSlider
+		let rMultiplierSlider
+		let zSpeedSlider
+		let zMagnitudeSlider
+		let spinMultiplierSlider
+		let strokeWeightSlider
+
+		// Defining global button variables
+		let fillButton
+
+		// Defining global text values
+		let font
+		let sCountText = 'Shape Count'
+		let vSizeText = 'Vertex Size'
+		let xRotationText = 'X Rotation'
+		let rMultiplierText = 'Radius Mult'
+		let zSpeedText = 'Z Speed'
+		let zMagnitudeText = 'Z Magnitude'
+		let spinMultiplierText = 'Spin Mult'
+		let strokeWeightText = 'Stroke Weight'
+
+		let sliderTextX
+		let sliderValueX
+
+		// Defining booleans
+		let fillShapes = false
+
+		function preload() {
+			font = loadFont('assets/Inconsolata.otf')
+		}
+
+		function setup() {
+			var myCanvas = createCanvas(windowWidth, 1000, WEBGL) // 600x650 canvas using WEBGL
+			myCanvas.parent("p5") // Setting div with id of "p5" to be the parent container for easier HTML adjustment
+			angleMode(DEGREES) // Using degrees angleMode instead of radians
+
+			// Creating sliders
+			sCountSlider = createSlider(2, 101, 10, 1)
+			vSizeSlider = createSlider(0, 180, 90, 30)
+			xRotationSlider = createSlider(0, 180, 60, 1)
+			rMultiplierSlider = createSlider(1, 100, 24)
+			zSpeedSlider = createSlider(1, 3, 1, 1)
+			zMagnitudeSlider = createSlider(0, 10, 1, .1)
+			spinMultiplierSlider = createSlider(0, 20, 0, 1)
+			strokeWeightSlider = createSlider(1, 3, 1, .1)
+
+			// Setting sliders positions
+			sCountSlider.position(40, 5)
+			vSizeSlider.position(40, 35)
+			xRotationSlider.position(40, 65)
+			rMultiplierSlider.position(40, 95)
+			zSpeedSlider.position(40, 125)
+			zMagnitudeSlider.position(40, 155)
+			spinMultiplierSlider.position(40, 185)
+			strokeWeightSlider.position(40, 215)
+
+			// Setting sliders CSS styles
+			sCountSlider.style('width', '80px')
+			vSizeSlider.style('width', '80px')
+			xRotationSlider.style('width', '80px')
+			rMultiplierSlider.style('width', '80px')
+			zSpeedSlider.style('width', '80px')
+			zMagnitudeSlider.style('width', '80px')
+			spinMultiplierSlider.style('width', '80px')
+			strokeWeightSlider.style('width', '80px')
+
+			// Creating Buttons
+			fillButton = createButton('Fill Shapes')
+
+			// Text Setup
+			textSize(16)
+			textFont(font)
+			textAlign(LEFT, TOP)
+		}
+
+		function draw() {
+			// Colouring background black.
+			background(0)
+
+			// Positioning buttons & linking to functions.
+			fillButton.position(10, 960)
+			fillButton.mousePressed(fillToggle)
+
+			// Colouring text white.
+			fill(255)
+
+			// Text x-positions
+			sliderValueX = -(windowWidth/2)+10
+			sliderTextX = -(windowWidth/2)+140
+
+			// Positioning text
+			text(sCountText, sliderTextX, -490)
+			text(vSizeText, sliderTextX, -460)
+			text(xRotationText, sliderTextX, -430)
+			text(rMultiplierText, sliderTextX, -400)
+			text(zSpeedText, sliderTextX, -370)
+			text(zMagnitudeText, sliderTextX, -340)
+			text(spinMultiplierText, sliderTextX, -310)
+			text(strokeWeightText, sliderTextX, -280)
+
+			// Position slider values
+			text(sCountSlider.value() - 1, sliderValueX, -490)
+			text(vSizeSlider.value(), sliderValueX, -460)
+			text(xRotationSlider.value(), sliderValueX, -430)
+			text(rMultiplierSlider.value(), sliderValueX, -400)
+			text(zSpeedSlider.value(), sliderValueX, -370)
+			text(zMagnitudeSlider.value(), sliderValueX, -340)
+			text(spinMultiplierSlider.value(), sliderValueX, -310)
+			text(strokeWeightSlider.value(), sliderValueX, -280)
+
+			// Defining slider output variables
+			var sCount = sCountSlider.value() // The amount of shapes
+			var vertexSize = vSizeSlider.value() // The step size of the for loop defining the shape
+			var radiusMultiplier = rMultiplierSlider.value() // The radius multiplier per instance shape
+			var zSpeed = zSpeedSlider.value() // The speed of the rise & falls
+			var zMagnitude = zMagnitudeSlider.value() // The magnitude of the rise & falls
+			var spinMultiplier = spinMultiplierSlider.value() // The multiplier of the incremental spin
+			var rotation = sin(frameCount)*spinMultiplier // The rotation angle per frame
+			var strokeSize = strokeWeightSlider.value() // The stroke weight
+
+			rotateX(xRotationSlider.value()) // Rotate around X-axis by given value
+
+			// For loop which defines amount of shapes to generate.
+			for (var i = 0; i < sCount; i++) {
+
+				// Setting the stroke weight
+				strokeWeight(strokeSize)
+
+				// Defining variables to be used to colour each shape.
+				// Using map to remap the output values of the sin and cos on FrameCount.
+				// First I set the input range from -1 to 1 (sin and cos output range),
+				// Then I set the output range to the range of values I want for each colour variable.
+				// FrameCount increments forever so it causes the sin & cos output to constantly fluctuate.
+				var r = map(sin(frameCount / 2), -1, 1, 100, 200)
+				// I map the current shape index here so each shape instance is slightly different.
+				var g = map(i, 0, sCount, 100, 255)
+				var b = map(cos(frameCount), -1, 1, 130, 230)
+
+				// Setting the angle at which the shapes rotate each frame.
+				rotate(rotation)
+
+				// If / else to check fillToggle boolean.
+				if(fillShapes) {
+					// If on, I fill the shape with my r, g, and b variables, but inverse.
+					fill(b, g, r)
+					// I colour the stroke black to make it more visible.
+					stroke(0)
+				} else {
+					// If off, I turn the shape fill off.
+					noFill()
+					// I then colour the stroke with my r, g, and b variables.
+					stroke(r, g, b)
+				}
+				// beginShape() marks the beginning of a complex shape.
+				beginShape()
+				// For loop which goes from 0-360 degrees, in steps defined earlier.
+				// 360 divided by vertexSize gives us the amount of angles we'll have.
+				// The smaller the vertexSize, the closer to a circle we get.
+				// If vertexSize = 1, there will be 360 vertices to be connected.
+				// If vertexSize = 90, there will be 4 vertices to be connected.
+				for (var j = 0; j < 360; j += (vertexSize+1)) {
+					// Radius of each shape: shape index * radiusMultiplier
+					var radius = i * radiusMultiplier
+					// X axis translation: radius * cosine of each vertex (j)
+					var x = radius * cos(j)
+					// Y axis translation: radius * sine of each vertex (j)
+					var y = radius * sin(j)
+					// Z axis translation: sine of (frameCount * zSpeed * shape index * zMagnitude) * (number of shapes * 2)
+					var z = sin(frameCount * zSpeed + i * zMagnitude) * (sCount*2)
+					// Creating shape by connecting the vertices. Since I use sin and cos on X and Y, it connects them evenly.
+					vertex(x, y, z)
+				}
+				// endShape(CLOSE) marks the end of a complex shape.
+				endShape(CLOSE)
+			}
+		}
+
+		// function to toggle the boolean fillShapes between true and false.
+		function fillToggle(){
+			// assign fillShapes boolean the value of NOT fillShape (ie, whatever it isn't)
+			fillShapes = !fillShapes
+		}
+
+		// function to resize the canvas width based off the window width.
+		function windowResized() {
+			resizeCanvas(windowWidth, 1000)
+		}
+
+	</script>
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+</head>
+<style>
+	body{
+		background-color: black;
+		color: white;
+	}
+	.jetBrainsMono{
+		font-family: 'JetBrains Mono', monospace;
+		text-align: center;
+	}
+</style>
+<body>
+<main>
+	<div id="p5"></div>
+	<div style="user-select: none;">
+	<h2 class="jetBrainsMono">Mangoshi's</h2>
+	<h1 class="jetBrainsMono">Funky Shape Generator V1</h1>
+	</div>
+</main>
+</body>
+</html>
